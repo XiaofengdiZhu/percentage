@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -28,7 +28,7 @@ namespace percentage
 
             // initialize menuItem
             menuItem.Index = 0;
-            menuItem.Text = "E&xit";
+            menuItem.Text = "退出";
             menuItem.Click += new System.EventHandler(menuItem_Click);
 
             notifyIcon.ContextMenu = contextMenu;
@@ -47,7 +47,8 @@ namespace percentage
         {
             PowerStatus powerStatus = SystemInformation.PowerStatus;
             batteryPercentage = (powerStatus.BatteryLifePercent * 100).ToString();
-
+            
+            bool charging = SystemInformation.PowerStatus.BatteryChargeStatus.HasFlag(BatteryChargeStatus.Charging);
             using (Bitmap bitmap = new Bitmap(DrawText(batteryPercentage, new Font(iconFont, iconFontSize), Color.White, Color.Transparent)))
             {
                 System.IntPtr intPtr = bitmap.GetHicon();
@@ -57,6 +58,19 @@ namespace percentage
                     {
                         notifyIcon.Icon = icon;
                         notifyIcon.Text = batteryPercentage + "%";
+                        if (!charging)
+                        {
+                            int seconds = SystemInformation.PowerStatus.BatteryLifeRemaining;
+                            if (seconds > 0)
+                            {
+                                int mins = seconds / 60;
+                                notifyIcon.Text += "\n剩余" + " " + (mins / 60) + ":" + (mins % 60);
+                            }
+                        }
+                        else
+                        {
+                            notifyIcon.Text = "已连接电源";
+                        }
                     }
                 }
                 finally
@@ -85,7 +99,7 @@ namespace percentage
                 // create a brush for the text
                 using (Brush textBrush = new SolidBrush(textColor))
                 {
-                    graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+                    graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
                     graphics.DrawString(text, font, textBrush, 0, 0);
                     graphics.Save();
                 }
